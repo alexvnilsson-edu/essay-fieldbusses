@@ -7,6 +7,7 @@
 \usepackage{titlesec}
 \usepackage{multicol}
 \usepackage{hyperref}
+\usepackage{environ}
 \usepackage{caption}
 \usepackage[
 	backend=biber,
@@ -22,14 +23,39 @@
 % Citering (måste vara först) %
 \addbibresource{referenser.bib}
 
+% Citera fullständigt namn %
+\newrobustcmd*{\citefirstlastauthor}{\AtNextCite{\DeclareNameAlias{labelname}{first-last}}\citeauthor}
+
 % Figurer %
 \graphicspath{ {./figurer/} }
 \DeclareGraphicsExtensions{.pdf,.jpg,.png}
 
-% Figure-kommando %
+% Figurkommando %
 \newenvironment{Figure}
-  {\par\medskip\noindent\minipage{\linewidth}}
-  {\endminipage\par\medskip}
+	{\par\medskip\noindent\minipage{\linewidth}}
+	{\endminipage\par\medskip}
+
+% Figuretikett: källa %
+
+\newcommand{\captioncite}[2][]{
+	\ifthenelse{\equal{#1}{}}{
+		\par\medskip\footnotesize{Källa: \cite{#2}}
+	}{
+		\par\medskip\footnotesize{Källa: \cite[#1]{#2}}
+	}	
+}
+
+\newcommand{\captionciteauthor}[1]{
+	\par\medskip\footnotesize{Källa: \citefirstlastauthor{#1}}
+}
+
+\newcommand{\captioncitetitle}[2][]{
+	\ifthenelse{\equal{#1}{}}{
+		\par\medskip\footnotesize{Källa: \citetitle{#2}}
+	}{
+		\par\medskip\footnotesize{Källa: \citetitle[#1]{#2}}
+	}	
+}
 
 %
 % Design och layout %
@@ -104,9 +130,11 @@
 
 Fältbussar är en teknologi för anslutning av enheter i ett centralt eller distribuerat kontrollsystem. Enheter kan vara fältenheter så som sensorer och ställdon, och fältkontroller så som programmerbara styrsystem och regulatorer.
 
-Teknologin används i olika industrier för att åstadkomma fabriksautomatisering och processkontrollering och automatisering av system i offentliga lokaler samt i hemmet ("smarta hem") (\cite[s. 22-25]{distributedfieldbuscontrolnetworksystems}).
+Teknologin används i olika industrier för att åstadkomma fabriksautomatisering och processkontrollering och automatisering av system i offentliga lokaler samt i hemmet (\enquote{smarta hem}) (\cite[s. 22-25]{distributedfieldbuscontrolnetworksystems}).
 
 Beroende på användningsområdet finns det olika krav på fältbussen, till exempel i området för fabriksautomatisering krävs det låga överföringstider som uppnås genom att använda ett färre antal fältenheter, korta ner längden på bussen och minska på storleken av datapaketen, medan automatisering av lokaler har större krav på pålitlighet och kostnadsbesparingar.
+
+I denna essän kommer jag utforska standarderna för fältbussar, hur de relaterar till OSI-modellen och lite om skillnaderna mellan standarderna samt hur Raspberry Pi (\enquote{Hallonpajen}) kan tänkas tillämpas i ett kontrollsystem eller för dylik automatisering.
 
 \section{Fördjupning}
 
@@ -115,6 +143,8 @@ Den tekniska lösningen för kommunikation med gränssnittet kan se olika ut ber
 
 \subsection{Open Systems Interconnection}
 
+\subsubsection{Standardisering}
+
 Internationella organisationen för standarder (ISO) publicerar standarden \textit{ISO/IEC 7498} --- eller \textit{Open Systems Interconnection (OSI)} --- som fastställer en specifikation för hur ett öppet system ska anslutas. (\cite{iso74981})
 
 Modellen bestämmer hur komponenter i ett öppet system ansluter till varandra, men komponenternas interna funktionalitet och konstruktion faller utanför modellens omfång. 
@@ -122,7 +152,7 @@ Modellen bestämmer hur komponenter i ett öppet system ansluter till varandra, 
 \begin{Figure}
 	\centering
 	\includegraphics[width=\linewidth]{osianslutningar}
-	\captionof{figure}{Förbindning av system i OSI-modellens\\ \\{\footnotesize Källa: \cite[s. 3]{iso74981}}}
+	\captionof{figure}{Förbindning av system i OSI-modellens\captioncitetitle[s. 3]{iso74981}}
 \end{Figure}
 
 OSI-modellen specificerar sju lager i arkitekturen för kommunikation:
@@ -137,15 +167,35 @@ OSI-modellen specificerar sju lager i arkitekturen för kommunikation:
 	\item Applikationslagret: ansvarar för kommunikation med programvaran, lagret närmast användaren
 \end{enumerate}
 
-\subsection{Fältbussar och OSI-modellen}
+\subsubsection{Fältbussar}
 
-PROFIBUS --- en vanlig standard för fältbussar --- följer standarden IEC 61158 (specifikt del två, IEC 61158-2) som beskriver den fysiska lagerspecifikationen för fältbussar. (\cite{profibuspowerplants}, \cite[s. 1083, \textit{IEC 61 158 Standard}]{fieldbustechindustrialautomation})
+% Kablage samt lager 1, 2 och 7
+
+Fältbussens standard avgörs utifrån fysiska mediumet av kablage, samt fysiska lagret, datalänk lagret och applikationslagret enligt OSI-referensmodellen. 
 
 \begin{Figure}
 	\centering
 	\includegraphics[width=\linewidth]{faltbusfysisktlager}
-	\captionof{figure}{Relation till fysiska lagret av fältbussens nätverksarkitektur\\ \\{\footnotesize Källa: \cite[s. 884]{mapepa}}}
+	\captionof{figure}{Relation till fysiska lagret av fältbussens nätverksarkitektur\captioncitetitle[s. 884]{mapepa}}
 \end{Figure}
+
+\textit{\MakeUppercase{Foundation} Fieldbus H1}-standarden  skiljer sig till exempel märkbart mot \textit{PROFIBUS DP}-standarden (eng. \textit{decentralised peripherals}) vad gäller prestanda, men \textit{PROFIBUS PA}-standarden \footnote{PROFIBUS PA tillämpar standarden IEC 61158-2 (\cite{profibuspowerplants}, \cite[s. 1083]{fieldbustechindustrialautomation}).} (eng. \textit{process automation}) har ungefär jämlik prestanda. Poängen jag försöker nå är att området \enquote{fältbussar} är ett väldigt komplext ett och det är inte lätt att kortfattat beskriva exakt hur en fältbuss används i nätverk för att det skiljer sig starkt från standard till standard.
+
+\subsection{Hallonpajen}
+
+Hallonpajen kan i ett öppet kontrollsystem anslutas som en fristående fältkontroller med ett \enquote{integrerat} programmatisk styrsystem och kommunikationsmöjligheter \footnote{Raspberry Pi 4 model B har kommunikationsprotokollen IEEE 802.11ac WLAN, Gigabit ethernet, Bluetooth 5.0 och BLE, 2xUSB2.0, 2xUSB3.0.} med bandbredder som väl möter dagens krav. Folk inom industrin (tillverkning, m.fl.) talar gott om Hallonpajen, men med viss tveksamhet angående riskerna att bryta från industristandarderna och förlora den kritiska support från leverantörer som man förlitar sig på (\cite{raspberrypireadyforindustry}).
+
+En annan kritisk begränsning i att sätta in en Hallonpaj i en verklig industriprocess är kompatabilitet mellan olika kommunikationsstandarder som kanske inte stöds \enquote{out-of-the-box} av Hallonpajen (se figur \ref{fig:raspberrypiprofibusdp}). \footnote{\citefirstlastauthor{raspberrypiprofibus} har lyckats interfaca en Raspberry Pi med PROFIBUS DP: \url{https://bues.ch/cms/automation/profibus}.}
+
+\begin{minipage}{\linewidth}
+		\includegraphics[width=\linewidth]{pilc_et200s}
+		\captionof{figure}{Hallonpaj som interfacar med PROFIBUS DP \captionciteauthor{raspberrypiprofibus}}
+		\label{fig:raspberrypiprofibusdp}
+\end{minipage}
+
+\subsubsection{Hallonpajen som styrenhet i hemmet}
+
+Även om Hallonpajen inte ännu är helt redo för industriellt bruk så används den flitigt inom hemautomatisering (\enquote{smarta hem}), till exempel för att styra belysning, klimatanläggningar och säkerhetssystem via mobilapplikationer eller med automatisering (övervaka inomhusklimat och justera AC:n, ställa in ljustemperatur efter tid på dygnet, etc.) (\cite{iotsmarthomeautomation}).
 
 \end{multicols}
 
