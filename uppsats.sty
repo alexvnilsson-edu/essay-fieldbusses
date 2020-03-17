@@ -1,0 +1,148 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{uppsats}[2020-03-16 Dokument för uppsatser]
+
+\RequirePackage{xparse}
+\RequirePackage{ifthen}
+
+\RequirePackage[a4paper, left=15mm, top=25mm, right=15mm, bottom=25mm]{geometry}
+\RequirePackage{import}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[swedish]{babel}
+\RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
+\RequirePackage{titlesec}
+\RequirePackage{multicol}
+\RequirePackage[hidelinks]{hyperref}
+\RequirePackage{environ}
+\RequirePackage{caption}
+\RequirePackage[
+	backend=biber,
+	style=numeric,
+	sorting=none,
+	hyperref
+]{biblatex}
+\RequirePackage{fancyhdr}
+\RequirePackage{newtxmath,newtxtext}
+\RequirePackage{csquotes}
+\RequirePackage{enumitem}
+\RequirePackage{graphicx}
+
+% Citera fullständigt namn %
+\newrobustcmd*{\citefirstlastauthor}{\AtNextCite{\DeclareNameAlias{labelname}{first-last}}\citeauthor}
+
+% Figurer %
+\NewDocumentCommand\figurer{O{}m}{
+  \IfNoValueTF{#1}{
+    \graphicspath{{#2}}
+	}{
+    \graphicspath{{#2}}
+		\DeclareGraphicsExtensions{#1}
+	}
+}
+
+\NewDocumentEnvironment{MinipageSkip}{O{\linewidth} +b}
+  {
+    \par\medskip\noindent
+      \begin{minipage}{#1}
+        {#2}
+  }
+  {
+    \end{minipage}\par\medskip
+  }
+
+% Figurkommando %
+\NewDocumentEnvironment{Figure}{mO{/linewidth}O{} +b}
+  {
+    \begin{MinipageSkip}{#2}
+      \includegraphics[width={#2}]{#1}
+      \captionof{figure}{#4}
+      \IfValueTF{#2}{
+        \label{fig:{#2}}
+      }{}
+  }
+	{
+    \end{MinipageSkip}
+  }
+
+% Figuretikett: källa %
+
+\newcommand{\cfootnote}[1]{\par\medskip\footnotesize{#1}}
+
+\NewDocumentCommand\ccite{O{}m}{
+  \IfValueTF{#1}
+    {\cfootnote{Källa: \cite[#1]{#2}}}
+    {\cfootnote{Källa: \cite{#2}}}
+}
+
+\NewDocumentCommand\cciteauthor{O{}m}{
+  \IfValueTF{#1}
+    {\cfootnote{Källa: \citeauthor[#1]{#2}}}
+    {\cfootnote{Källa: \citeauthor{#2}}}
+}
+\NewDocumentCommand\cciteauthorfull{O{}m}{
+  \IfValueTF{#1}
+    {\cfootnote{Källa: \citefirstlastauthor[#1]{#2}}}
+    {\cfootnote{Källa: \citefirstlastauthor{#2}}}
+}
+
+\NewDocumentCommand\ccitetitle{O{}m}{
+  \IfValueTF{#1}
+    {\cfootnote{Källa: \citetitle[#1]{#2}}}
+    {\cfootnote{Källa: \citetitle{#2}}}
+}
+
+%
+% Design och layout %
+%
+
+% Rubriker: numrering %
+\renewcommand{\thesection}{\Roman{section}.}
+\renewcommand{\thesubsection}{\Alph{subsection}.}
+\renewcommand{\thesubsubsection}{\arabic{subsubsection})}
+
+% Rubriker: stil %
+\titleformat*{\section}{\large\MakeUppercase}
+\titleformat*{\subsection}{\large}
+\titleformat*{\subsubsection}{\normalsize}
+\titleformat*{\paragraph}{\normalsize}
+\titleformat*{\subparagraph}{\normalsize}
+
+% Kolumner %
+\setlength{\columnsep}{1cm}
+
+% Paragrafer %
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.5em}
+
+% Typsnitt
+\renewcommand{\familydefault}{\sfdefault}
+
+% Dokument: interna variabler %
+\def\@uppsatstitel{}
+\def\@forfattare{}
+\def\@kurs{}
+\def\@skola{}
+\def\@logotyp{}
+\def\@logotypalt{width=8cm}
+\def\@pubdatum{\today}
+\def\@revdatum{}
+
+% Dokument %
+\def\uppsatstitel#1{\def\@uppsatstitel{#1} \def\@title{#1}}
+\def\forfattare#1{\def\@forfattare{#1} \def\@author{#1}}
+\def\kurs#1{\def\@kurs{#1}}
+\def\skola#1{\def\@skola{#1}}
+\def\logotyp#1{\def\@logotyp{#1}}
+\def\logotypalt#1{\def\@logotypalt{#1}}
+\def\pubdatum#1{\def\@pubdatum{#1}}
+\def\revdatum#1{\def\@revdatum{#1}}
+
+% \NewDocumentCommand\logotyp{O{}m}{
+%   \IfValueTF{#1}{
+%     \def\@logotyp{#2}
+%     \def\@logotypalt{#1}
+%   } {
+%     \def\@logotyp{#2}
+%   }
+% }
+
